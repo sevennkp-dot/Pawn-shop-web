@@ -159,76 +159,61 @@
     const SUPABASE_KEY = 'sb_publishable__mJEVWqu--G3YVxgOdKAng_N985StDd';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let products = [];
-    let cart = [];
-    let realtimeChannel = null;
+// ===== state =====
+let products = [];
+let cart = [];
 
-    async function loadProducts() {
-      try{
-        const { data, error } = await supabaseClient
-          .from('products')
-          .select('*')
-          .eq('is_sold', false)
-          .order('id', { ascending: true });
+// ===== โหลดสินค้า =====
+async function loadProducts(){
+  const { data, error } = await supabaseClient.from('products').select('*');
+  if(error){ console.error(error); return; }
+  products = data || [];
+  renderProducts();
+}
 
-        if (error) {
-          alert('โหลดสินค้าไม่สำเร็จ');
-          console.error(error.message || error);
-          return;
-        }
-        // รองรับหลายรูป: image_urls เป็น array
-        products = (data || []).map(p => ({
-          ...p,
-          image_urls: Array.isArray(p.image_urls)
-            ? p.image_urls
-            : (p.image_url ? [p.image_url] : [])
-        }));
-        renderProducts();
-      }catch(err){
-        console.error(err);
-        alert('เกิดข้อผิดพลาดในการโหลดสินค้า');
-      }
-    }
+function renderProducts(){
+  const grid = document.getElementById('productGrid');
+  const category = document.getElementById('categoryFilter').value;
+  const search = document.getElementById('search').value.toLowerCase();
+  grid.innerHTML = '';
 
-    function subscribeRealtimeProducts() {
-      if (realtimeChannel) return;
-      realtimeChannel = supabaseClient
-        .channel('products-realtime')
-        .on('postgres_changes',{ event: '*', schema: 'public', table: 'products' },() => loadProducts())
-        .subscribe();
-    }
-
-    function renderProducts() {
-      const grid = document.getElementById('productGrid');
-      const category = document.getElementById('categoryFilter').value;
-      const search = document.getElementById('search').value.toLowerCase();
-      grid.innerHTML = '';
-
-      products
-        .filter(p => category === 'all' || p.category === category)
-        .filter(p => (p.name || '').toLowerCase().includes(search) || (p.brand || '').toLowerCase().includes(search))
-        .forEach(p => {
-          const card = document.createElement('div');
-          card.className = 'card';
-          const cover = p.image_urls[0] || 'https://via.placeholder.com/300x200';
-          card.innerHTML = `
-            <img src="${cover}" onclick="openSlider('${p.id}')" />
-            <h3>${p.name}</h3>
-            <div>แบรนด์: ${p.brand || '-'}</div>
-            <div style="font-size:14px; color:#555;">${p.specs || ''}</div>
-            <div class="price">฿${Number(p.price).toLocaleString()}</div>
-            <div style="font-size:13px;color:#888;">สต็อกคงเหลือ: ${p.stock ?? '-'} ชิ้น</div>
-            <button onclick="addToCart('${p.id}')">เพิ่มลงตะกร้า</button>
-            <button style="background:#6c757d;margin-top:6px" onclick="openDetail('${p.id}')">ดูรายละเอียด</button>`;
-          grid.appendChild(card);
-        });
-    }
+  products
+    .filter(p => (p.stock ?? 0) > 0) // ซ่อนสินค้าที่สต็อก = 0
+    .filter(p => category === 'all' || p.category === category)
+    .filter(p => (p.name || '').toLowerCase().includes(search) || (p.brand || '').toLowerCase().includes(search))
+    .forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const cover = (p.image_urls && p.image_urls[0]) || 'https://via.placeholder.com/300x200';
+      card.innerHTML = `
+        <img src="${cover}" onclick="openSlider('${p.id}')" />
+        <h3>${p.name}</h3>
+        <div>แบรนด์: ${p.brand || '-'}</div>
+        <div style="font-size:14px; color:#555;">${p.specs || ''}</div>
+        <div class="price">฿${Number(p.price).toLocaleString()}</div>
+        <div style="font-size:13px;color:#888;">สต็อกคงเหลือ: ${p.stock ?? '-'} ชิ้น</div>
+        <button onclick="addToCart('${p.id}')">เพิ่มลงตะกร้า</button>
+        <button style="background:#6c757d;margin-top:6px" onclick="openDetail('${p.id}')">ดูรายละเอียด</button>`;
+      grid.appendChild(card);
+    });
+}
 
     function addToCart(id) {
       const product = products.find(p => p.id === id);
+      if (!product || product.stock <= 0) {
+        alert('สินค้าหมดสต็อก');
+        return;
+      }
       const item = cart.find(i => i.id === id);
-      if (item) item.qty += 1;
-      else cart.push({ ...product, qty: 1 });
+      if (item) {
+        if (item.qty + 1 > product.stock) {
+          alert('จำนวนสินค้าเกินสต็อก');
+          return;
+        }
+        item.qty += 1;
+      } else {
+        cart.push({ ...product, qty: 1 });
+      }
       updateCart();
     }
 
@@ -363,16 +348,17 @@
         return;
       }
 
-      const productIds = cart.map(i => i.id);
-      const { error: updateError } = await supabaseClient.from('products').update({ is_sold: true }).in('id', productIds);
-      if (updateError) {
-        console.error(updateError.message || updateError);
-        alert('อัปเดตสถานะสินค้าไม่สำเร็จ');
-        return;
+      // ✅ ตัดสต็อกตามจำนวนที่ซื้อ
+      for (const item of cart) {
+        const newStock = item.stock - item.qty;
+        await supabaseClient
+          .from('products')
+          .update({ stock: newStock })
+          .eq('id', item.id);
       }
 
-      products = products.filter(p => !productIds.includes(p.id));
-      renderProducts();
+      // โหลดสินค้าใหม่ (สินค้าที่ stock = 0 จะหายไป)
+      await loadProducts();
 
       showSuccessPopup(order);
       cart = [];
@@ -382,7 +368,21 @@
     }
 
     loadProducts();
-    subscribeRealtimeProducts();
+subscribeRealtimeProducts();
+
+// ===== realtime products =====
+function subscribeRealtimeProducts() {
+  supabaseClient
+    .channel('realtime-products')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'products' },
+      () => {
+        loadProducts(); // รีเฟรชสินค้าเมื่อมีการเปลี่ยนแปลงสต็อก/ข้อมูล
+      }
+    )
+    .subscribe();
+}
 
     function showSuccessPopup(order){
       const box=document.getElementById('popupDetail');
@@ -474,3 +474,4 @@
 </body>
 </html>
 กหดกหดกกดเกดเดกดหกดห
+หกดหกดหกดหกดหกด
