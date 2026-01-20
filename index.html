@@ -113,9 +113,8 @@
       </div>
 
       <div id="paymentBox" style="margin-top:8px;">
-        <label><input type="radio" name="payment" value="cod" checked onchange="toggleSlip(false)"> เก็บเงินปลายทาง</label><br>
-        <label><input type="radio" name="payment" value="transfer" onchange="toggleSlip(true)"> โอนเงิน</label>
-        <input type="file" id="slipFile" accept="image/*" style="display:none; margin-top:6px;" />
+        <label><input type="radio" name="payment" value="transfer" checked onchange="toggleSlip(true)"> โอนเงิน</label>
+        <input type="file" id="slipFile" accept="image/*" style="display:block; margin-top:6px;" />
       </div>
 
       <div id="pickupBox" style="display:none; margin-top:8px;">
@@ -313,9 +312,7 @@
       }
 
       const delivery_type = document.querySelector('input[name="delivery"]:checked').value;
-      const payment_type = delivery_type === 'delivery'
-        ? document.querySelector('input[name="payment"]:checked').value
-        : null;
+      const payment_type = delivery_type === 'delivery' ? 'transfer' : null;
 
       let slip_url = null;
       if (payment_type === 'transfer') {
@@ -401,14 +398,15 @@
       document.getElementById('pickupTime').value='';
       document.getElementById('slipFile').value='';
       document.querySelector('input[name="delivery"][value="delivery"]').checked=true;
-      document.querySelector('input[name="payment"][value="cod"]').checked=true;
-      togglePickup(false);
-      toggleSlip(false);
+      document.querySelector('input[name="payment"][value="transfer"]').checked=true;
+      toggleSlip(true);
     }
     function closePopup(){ document.getElementById('successPopup').style.display='none'; }
 
     // ===== รายละเอียดสินค้า =====
+    let currentDetailId = null;
     function openDetail(id){
+      currentDetailId = id;
       const p = products.find(x=>x.id===id);
       if(!p) return;
       const html = `
@@ -475,4 +473,4 @@
   </div>
 </body>
 </html>
-
+กหดกหดกกดเกดเดกดหกดห
