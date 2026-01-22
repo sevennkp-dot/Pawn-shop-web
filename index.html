@@ -163,6 +163,19 @@
 let products = [];
 let cart = [];
 
+// ===== ซื้อทันทีแบบ Shopee =====
+function buyNow(id){
+  const product = products.find(p=>p.id===id);
+  if(!product || product.stock<=0){
+    alert('สินค้าหมดสต็อก');
+    return;
+  }
+  cart = [{ ...product, qty: 1 }];
+  updateCart();
+  closeDetail();
+  document.getElementById('cartBox').style.display='block';
+}
+
 // ===== โหลดสินค้า =====
 async function loadProducts(){
   const { data, error } = await supabaseClient.from('products').select('*');
@@ -192,7 +205,7 @@ function renderProducts(){
         <div style="font-size:14px; color:#555;">${p.specs || ''}</div>
         <div class="price">฿${Number(p.price).toLocaleString()}</div>
         <div style="font-size:13px;color:#888;">สต็อกคงเหลือ: ${p.stock ?? '-'} ชิ้น</div>
-        <button onclick="addToCart('${p.id}')">เพิ่มลงตะกร้า</button>
+        <button onclick="buyNow('${p.id}')">สั่งซื้อ</button>
         <button style="background:#6c757d;margin-top:6px" onclick="openDetail('${p.id}')">ดูรายละเอียด</button>`;
       grid.appendChild(card);
     });
@@ -405,7 +418,8 @@ function subscribeRealtimeProducts() {
 
     // ===== รายละเอียดสินค้า =====
     let currentDetailId = null;
-    function openDetail(id){
+    /* Shopee Style Detail */
+function openDetail(id){
       currentDetailId = id;
       const p = products.find(x=>x.id===id);
       if(!p) return;
@@ -468,10 +482,13 @@ function subscribeRealtimeProducts() {
   <div class="popup-overlay" id="detailPopup" style="display:none;">
     <div class="popup" style="max-width:600px;text-align:left;" onclick="event.stopPropagation()">
       <div id="detailBox"></div>
-      <div style="display:flex;gap:10px;margin-top:15px;"><button onclick="addToCart(currentDetailId)" style="flex:1;">🛒 เพิ่มลงตะกร้า</button><button onclick="closeDetail()" style="flex:1;background:#6c757d;">ปิด</button></div>
+      <div style="display:flex;gap:10px;margin-top:15px;">
+  <button onclick="buyNow(currentDetailId)" style="flex:1;">⚡ สั่งซื้อ</button>
+  <button onclick="closeDetail()" style="flex:1;background:#6c757d;">ปิด</button>
+</div>
     </div>
   </div>
 </body>
 </html>
 กหดกหดกกดเกดเดกดหกดห
-หกดหกดหกดหกดหกด
+กหดกดหกด
