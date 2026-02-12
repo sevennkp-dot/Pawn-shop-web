@@ -4,113 +4,132 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>เว็บแอพขายสินค้า</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; background:#f5f5f5; margin:0; padding:20px; }
-    h1 { text-align:center; }
-    .container { max-width:1200px; margin:auto; }
-    .filters { display:flex; gap:10px; margin-bottom:20px; }
-    select, input, textarea { padding:8px; font-size:16px; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:20px; }
-    .card { background:#fff; border-radius:8px; padding:15px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-    .card img { width:100%; height:180px; object-fit:cover; border-radius:6px; cursor:zoom-in; }
-    .card h3 { margin:10px 0 5px; }
-    .price { color:#0a7; font-weight:bold; }
-    button { padding:8px 12px; background:#007bff; color:#fff; border:none; border-radius:4px; cursor:pointer; }
-    button:hover { background:#0056b3; }
-
-    .floating-cart {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      background: #007bff;
-      color: #fff;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      z-index: 9999;
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#0b74ff;
+      --accent-600:#065fd6;
+      --success:#07a981;
+      --danger:#dc3545;
+      --radius:12px;
+      --max-width:1160px;
     }
-    .floating-cart span {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      background: red;
-      color: #fff;
-      border-radius: 50%;
-      padding: 2px 6px;
-      font-size: 12px;
+    *{box-sizing:border-box}
+    html,body{height:100%;}
+    body { font-family: 'Noto Sans Thai', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:var(--bg); margin:0; color:#111; }
+    .site { max-width:var(--max-width); margin:28px auto; padding:20px; }
+
+    header.topbar{display:flex;align-items:center;gap:16px;justify-content:space-between;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:48px;height:48px;background:linear-gradient(135deg,var(--accent),#8ab6ff);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px}
+    .brand h1{margin:0;font-size:18px}
+
+    .controls{display:flex;gap:12px;align-items:center}
+    .search{display:flex;gap:8px;align-items:center;background:var(--card);padding:8px;border-radius:999px;box-shadow:0 2px 6px rgba(16,24,40,0.04)}
+    .search input{border:0;background:transparent;outline:none;padding:6px 8px;font-size:15px;width:260px}
+    .select{background:var(--card);padding:8px;border-radius:10px;box-shadow:0 2px 6px rgba(16,24,40,0.04)}
+
+    .cart-summary{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:#fff;padding:8px 12px;border-radius:10px;display:flex;gap:12px;align-items:center}
+    .cart-summary .count{font-weight:700}
+
+    main{display:grid;grid-template-columns:1fr;gap:18px}
+
+    .panel{background:var(--card);padding:16px;border-radius:var(--radius);box-shadow:0 6px 20px rgba(11,20,40,0.04)}
+    .panel h2{margin:0 0 12px;font-size:16px}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+    .card{background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(11,20,40,0.04);display:flex;flex-direction:column;gap:8px}
+    .card .img{width:100%;height:160px;border-radius:10px;overflow:hidden}
+    .card .img img{width:100%;height:100%;object-fit:cover;display:block}
+    .card h3{margin:4px 0 0;font-size:16px}
+    .meta{font-size:13px;color:var(--muted)}
+    .price{color:var(--success);font-weight:700;font-size:16px}
+    .card .actions{margin-top:auto;display:flex;gap:8px}
+    .btn{border:0;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:600}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-ghost{background:#f3f4f6;color:#111}
+
+    /* side cart */
+    .cart-panel{position:fixed;right:20px;top:20px;width:360px;max-width:calc(100% - 40px);height:86vh;background:var(--card);border-radius:14px;box-shadow:0 12px 40px rgba(11,20,40,0.12);padding:16px;overflow:auto;display:none;z-index:999}
+    .cart-item{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f0f2f5}
+    .cart-item img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+
+    .popup-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;z-index:10000}
+
+    @media (max-width:900px){
+      .controls{flex-direction:column;align-items:flex-start}
+      .search input{width:160px}
+      .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+      .cart-panel{right:12px;left:12px;width:auto;height:72vh}
     }
-
-    .cart { position:fixed; top:0; right:0; width:350px; height:100%; background:#fff; box-shadow:-2px 0 6px rgba(0,0,0,0.2); padding:15px; overflow:auto; display:none; }
-    .cart h2 { margin-top:0; }
-    .cart-item { border-bottom:1px solid #ddd; padding:8px 0; }
-    .cart-item button { background:#dc3545; margin-left:5px; }
-
-    @media (max-width: 768px) {
-      body { padding:10px; }
-      .filters { flex-direction:column; }
-      .grid { grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap:12px; }
-      .card img { height:140px; }
-      .cart { width:100%; }
-      button { width:100%; margin-top:6px; }
-    }
-
-    .popup-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:10000;pointer-events:auto}
-    .popup-overlay.hidden{display:none !important;}
-    #detailPopup{z-index:9000}
-    #imageViewer,#imageSlider{z-index:11000}
-    .popup{background:#fff;border-radius:10px;max-width:400px;width:90%;padding:20px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.3)}
-    .popup h2{margin-top:0;color:#0a7}
-    .popup button{margin-top:15px}
-    /* ซ่อนสัญลักษณ์ตะกร้าลอยขวาล่าง (ถ้ามีหลงเหลือ) */
-  .floating-cart, .cart-fab, .cart-button { display: none !important; }
-</style>
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div style="text-align:right; margin-bottom:10px;">
-      🛒 ตะกร้า: <span id="cartCount">0</span> รายการ | รวม <span id="cartTotal">0</span> บาท
-      <button onclick="toggleCart()">ดูตะกร้า</button>
-    </div>
+  <div class="site">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">ร้าน</div>
+        <div>
+          <h1>เว็บแอพขายสินค้า</h1>
+          <div style="font-size:12px;color:var(--muted)">ขายสินค้าออนไลน์ — รองรับการสั่งซื้อและตรวจสอบสถานะ</div>
+        </div>
+      </div>
 
-    <h1>เว็บแอพขายสินค้า</h1>
+      <div class="controls">
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M21 21l-4.35-4.35" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="#9aa4b2" stroke-width="2"/></svg>
+          <input id="search" type="text" placeholder="ค้นหาสินค้า..." oninput="renderProducts()">
+        </div>
+        <div class="select">
+          <select id="categoryFilter" onchange="renderProducts()">
+            <option value="all">ทุกประเภท</option>
+            <option value="it">อุปกรณ์ IT</option>
+            <option value="tools">อุปกรณ์ช่าง</option>
+            <option value="fashion">กระเป๋า / แว่นตา</option>
+          </select>
+        </div>
+        <div class="cart-summary" role="button" onclick="toggleCart()" style="cursor:pointer">
+          <div>🛒</div>
+          <div style="font-size:13px">ตะกร้า <span class="count" id="cartCount">0</span></div>
+          <div style="font-size:13px">฿<span id="cartTotal">0</span></div>
+        </div>
+      </div>
+    </header>
 
-    <div style="margin:20px 0; background:#fff; padding:15px; border-radius:8px;">
-      <h2>🔍 ตรวจสอบสถานะคำสั่งซื้อ</h2>
-      <input id="checkName" placeholder="ชื่อผู้สั่ง" style="width:100%; margin-bottom:6px;" />
-      <input id="checkPhone" placeholder="เบอร์โทร" style="width:100%; margin-bottom:6px;" />
-      <button onclick="checkOrder()">ตรวจสอบคำสั่งซื้อ</button>
-      <div id="orderResult" style="margin-top:10px;"></div>
-    </div>
+    <main>
+      <section class="panel" aria-labelledby="order-check">
+        <h2 id="order-check">🔍 ตรวจสอบสถานะคำสั่งซื้อ</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="checkName" placeholder="ชื่อผู้สั่ง" style="flex:1;min-width:180px;padding:8px;border-radius:8px;border:1px solid #eef2f7" />
+          <input id="checkPhone" placeholder="เบอร์โทร" style="flex:1;min-width:150px;padding:8px;border-radius:8px;border:1px solid #eef2f7" />
+          <button class="btn btn-primary" onclick="checkOrder()">ตรวจสอบคำสั่งซื้อ</button>
+        </div>
+        <div id="orderResult" style="margin-top:12px;color:var(--muted)"></div>
+      </section>
 
-    <div class="filters">
-      <select id="categoryFilter" onchange="renderProducts()">
-        <option value="all">ทุกประเภท</option>
-        <option value="it">อุปกรณ์ IT</option>
-        <option value="tools">อุปกรณ์ช่าง</option>
-        <option value="fashion">กระเป๋า / แว่นตา</option>
-      </select>
-      <input type="text" id="search" placeholder="ค้นหาสินค้า..." oninput="renderProducts()" />
-    </div>
-
-    <div class="grid" id="productGrid"></div>
+      <section class="panel">
+        <div class="grid" id="productGrid"></div>
+      </section>
+    </main>
   </div>
 
-  <div class="cart" id="cartBox">
+  <aside class="cart-panel" id="cartBox" aria-hidden="true">
     <h2>ตะกร้าสินค้า</h2>
     <div id="cartItems"></div>
-    <h3>รวมทั้งหมด: ฿<span id="cartTotalBox">0</span></h3>
-    <div style="margin:10px 0;">
-      <input id="customerName" placeholder="ชื่อผู้สั่ง" style="width:100%; margin-bottom:5px;" />
-      <input id="customerPhone" placeholder="เบอร์โทร" style="width:100%; margin-bottom:5px;" />
-      <textarea id="customerAddress" placeholder="ที่อยู่จัดส่ง"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <div style="font-weight:700">รวมทั้งหมด</div>
+      <div style="font-weight:700">฿<span id="cartTotalBox">0</span></div>
+    </div>
 
-      <div style="margin-top:8px;">
+    <div style="margin-top:12px">
+      <input id="customerName" placeholder="ชื่อผู้สั่ง" style="width:100%; margin-bottom:8px; padding:8px; border-radius:8px; border:1px solid #eef2f7;" />
+      <input id="customerPhone" placeholder="เบอร์โทร" style="width:100%; margin-bottom:8px; padding:8px; border-radius:8px; border:1px solid #eef2f7;" />
+      <textarea id="customerAddress" placeholder="ที่อยู่จัดส่ง" style="width:100%;min-height:80px;padding:8px;border-radius:8px;border:1px solid #eef2f7"></textarea>
+
+      <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <label><input type="radio" name="delivery" value="delivery" checked onchange="togglePickup(false)"> จัดส่ง</label>
         <label><input type="radio" name="delivery" value="pickup" onchange="togglePickup(true)"> นัดรับที่ร้าน</label>
       </div>
@@ -121,7 +140,7 @@
       </div>
 
       <div id="pickupBox" style="display:none; margin-top:8px;">
-        <select id="pickupBranch" style="width:100%; margin-bottom:5px;">
+        <select id="pickupBranch" required style="width:100%; margin-bottom:5px;padding:8px;border-radius:8px;border:1px solid #eef2f7;">
           <option value="">-- เลือกสาขารับของ --</option>
           <option value="สาขาสกล">สาขาสกล</option>
           <option value="สาขามุกดาหาร">สาขามุกดาหาร</option>
@@ -129,23 +148,44 @@
           <option value="สาขานาแก">สาขานาแก</option>
           <option value="สาขาอำนาจเจริญ">สาขาอำนาจเจริญ</option>
         </select>
-        <input id="pickupDate" type="date" />
-        <input id="pickupTime" type="time" />
+        <input id="pickupDate" type="date" required style="width:100%;margin-bottom:6px;padding:8px;border-radius:8px;border:1px solid #eef2f7" />
+        <input id="pickupTime" type="time" required style="width:100%;padding:8px;border-radius:8px;border:1px solid #eef2f7" />
       </div>
     </div>
-    <button onclick="submitOrder()">สั่งซื้อ</button>
-    <button onclick="toggleCart()">ปิด</button>
-  </div>
+
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" onclick="submitOrder()" style="flex:1">สั่งซื้อ</button>
+      <button class="btn btn-ghost" onclick="toggleCart()" style="flex:1">ปิด</button>
+    </div>
+  </aside>
 
   <div class="popup-overlay" id="successPopup">
-    <div class="popup">
-      <h2>✅ สั่งซื้อสำเร็จ</h2>
-      <div id="popupDetail"></div>
-      <button onclick="closePopup()">ตกลง</button>
+    <div style="background:#fff;border-radius:12px;padding:20px;max-width:420px;width:90%;text-align:center">
+      <h2 style="margin:0 0 8px;color:var(--success)">✅ สั่งซื้อสำเร็จ</h2>
+      <div id="popupDetail" style="color:var(--muted)"></div>
+      <div style="margin-top:12px"><button class="btn btn-primary" onclick="closePopup()">ตกลง</button></div>
     </div>
   </div>
 
-  <div class="floating-cart" onclick="toggleCart()">🛒<span id="floatingCartCount">0</span></div>
+  <div class="popup-overlay" id="imageViewer" onclick="closeImageViewer()">
+    <button onclick="closeImageViewer(); event.stopPropagation()" style="position:absolute;top:20px;right:20px;font-size:28px;background:#000a;border:none;color:#fff;border-radius:50%;width:44px;height:44px;cursor:pointer">✕</button>
+    <img id="viewerImg" style="max-width:90%;max-height:90%;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.4)" />
+  </div>
+
+  <!-- Slider เต็มจอ -->
+  <div class="popup-overlay" id="imageSlider" onclick="closeSlider()" style="display:none;">
+    <button onclick="closeSlider(); event.stopPropagation()" style="position:absolute;top:20px;right:20px;font-size:28px;background:#000a;border:none;color:#fff;border-radius:50%;width:44px;height:44px;cursor:pointer">✕</button>
+    <button onclick="prevSlide(event)" style="position:absolute;left:20px;font-size:32px;background:none;border:none;color:#fff">❮</button>
+    <img id="sliderImg" style="max-width:90%;max-height:90%;border-radius:10px;" />
+    <button onclick="nextSlide(event)" style="position:absolute;right:20px;font-size:32px;background:none;border:none;color:#fff">❯</button>
+  </div>
+
+  <div class="popup-overlay" id="detailPopup" style="display:none;">
+    <div style="background:#fff;border-radius:12px;padding:16px;max-width:720px;width:92%;text-align:left;" onclick="event.stopPropagation()">
+      <div id="detailBox"></div>
+      <div style="display:flex;gap:10px;margin-top:12px;"><button onclick="buyNow(currentDetailId)" style="flex:1;" class="btn btn-primary">🛒 สั่งซื้อ</button><button onclick="closeDetail()" style="flex:1;background:#6c757d;color:#fff;border-radius:8px;border:0;padding:9px">ปิด</button></div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -177,7 +217,7 @@ async function loadProducts(){
 function renderProducts(){
   const grid = document.getElementById('productGrid');
   const category = document.getElementById('categoryFilter').value;
-  const search = document.getElementById('search').value.toLowerCase();
+  const search = (document.getElementById('search').value || '').toLowerCase();
   grid.innerHTML = '';
 
   products
@@ -189,14 +229,13 @@ function renderProducts(){
       card.className = 'card';
       const cover = (p.image_urls && p.image_urls[0]) || 'https://via.placeholder.com/300x200';
       card.innerHTML = `
-        <img src="${cover}" onclick="openSlider('${p.id}')" />
+        <div class="img"><img src="${cover}" onclick="openSlider('${p.id}')" alt="${(p.name||'สินค้า')}"/></div>
         <h3>${p.name}</h3>
-        <div>แบรนด์: ${p.brand || '-'}</div>
-        <div style="font-size:14px; color:#555;">${p.specs || ''}</div>
+        <div class="meta">แบรนด์: ${p.brand || '-'}</div>
+        <div class="meta" style="font-size:13px;color:var(--muted)">${p.specs || ''}</div>
         <div class="price">฿${Number(p.price).toLocaleString()}</div>
-        <div style="font-size:13px;color:#888;">สต็อกคงเหลือ: ${p.stock ?? '-'} ชิ้น</div>
-        <button onclick="buyNow('${p.id}')">สั่งซื้อ</button>
-        <button style="background:#6c757d;margin-top:6px" onclick="openDetail('${p.id}')">ดูรายละเอียด</button>`;
+        <div class="meta">สต็อก: ${p.stock ?? '-'} ชิ้น</div>
+        <div class="actions"><button class="btn btn-primary" onclick="buyNow('${p.id}')">สั่งซื้อ</button><button class="btn btn-ghost" onclick="openDetail('${p.id}')">ดูรายละเอียด</button></div>`;
       grid.appendChild(card);
     });
 }
@@ -245,14 +284,17 @@ function renderProducts(){
       const count = cart.reduce((s, i) => s + i.qty, 0);
       const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
       document.getElementById('cartCount').innerText = count;
-      document.getElementById('floatingCartCount').innerText = count;
+      // keep compatibility if floating count exists
+      const floating = document.getElementById('floatingCartCount');
+      if(floating) floating.innerText = count;
       document.getElementById('cartTotal').innerText = total.toLocaleString();
       document.getElementById('cartTotalBox').innerText = total.toLocaleString();
 
       const box = document.getElementById('cartItems');
       box.innerHTML = '';
       cart.forEach(i => {
-        box.innerHTML += `<div class="cart-item">${i.name} x ${i.qty}<br>฿${(i.price*i.qty).toLocaleString()} <button onclick="removeFromCart('${i.id}')">ลบ</button></div>`;
+        const img = (i.image_urls && i.image_urls[0]) || 'https://via.placeholder.com/120';
+        box.innerHTML += `<div class="cart-item"><img src="${img}" alt="${i.name}"/><div style="flex:1"><div style="font-weight:600">${i.name}</div><div style="font-size:13px;color:var(--muted)">฿${(i.price*i.qty).toLocaleString()} • x${i.qty}</div></div><div><button onclick="removeFromCart('${i.id}')" style="background:${'var(--danger)'};color:#fff;border:0;padding:6px 8px;border-radius:6px;cursor:pointer">ลบ</button></div></div>`;
       });
     }
 
@@ -291,7 +333,7 @@ function renderProducts(){
       }
 
       box.innerHTML = data.map(o => `
-        <div style="border-bottom:1px solid #ddd; padding:6px 0;">
+        <div style="border-bottom:1px solid #eee; padding:8px 0;">
           <div>เลขออเดอร์: ${o.id}</div>
           <div>ยอดรวม: ฿${Number(o.total_amount).toLocaleString()}</div>
           <div>สถานะ: รอดำเนินการ</div>
@@ -340,9 +382,22 @@ function renderProducts(){
       const pickup_date = delivery_type === 'pickup' ? document.getElementById('pickupDate').value : null;
       const pickup_time = delivery_type === 'pickup' ? document.getElementById('pickupTime').value : null;
 
-      if (delivery_type === 'pickup' && !pickup_branch) {
-        alert('กรุณาเลือกสาขารับของ');
-        return;
+      if (delivery_type === 'pickup') {
+        if (!pickup_branch) {
+          alert('กรุณาเลือกสาขารับของ');
+          document.getElementById('pickupBranch').focus();
+          return;
+        }
+        if (!pickup_date) {
+          alert('กรุณาเลือกวันที่รับของ');
+          document.getElementById('pickupDate').focus();
+          return;
+        }
+        if (!pickup_time) {
+          alert('กรุณาเลือกเวลารับของ');
+          document.getElementById('pickupTime').focus();
+          return;
+        }
       }
 
       const total_amount = cart.reduce((s, i) => s + i.qty * i.price, 0);
@@ -387,7 +442,7 @@ function renderProducts(){
     }
 
     loadProducts();
-subscribeRealtimeProducts();
+    subscribeRealtimeProducts();
 
 // ===== realtime products =====
 function subscribeRealtimeProducts() {
@@ -416,8 +471,10 @@ function subscribeRealtimeProducts() {
       document.getElementById('pickupDate').value='';
       document.getElementById('pickupTime').value='';
       document.getElementById('slipFile').value='';
-      document.querySelector('input[name="delivery"][value="delivery"]').checked=true;
-      document.querySelector('input[name="payment"][value="transfer"]').checked=true;
+      const del = document.querySelector('input[name="delivery"][value="delivery"]');
+      const pay = document.querySelector('input[name="payment"][value="transfer"]');
+      if(del) del.checked=true;
+      if(pay) pay.checked=true;
       toggleSlip(true);
     }
     function closePopup(){ document.getElementById('successPopup').style.display='none'; }
@@ -428,23 +485,35 @@ function subscribeRealtimeProducts() {
       currentDetailId = id;
       const p = products.find(x=>x.id===id);
       if(!p) return;
+
+      const images = (p.image_urls || []);
+      const imageHtml = images.length
+        ? images.map(u=>`<img src="${u}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer" onclick="openImageViewer('${u}')" />`).join('')
+        : '<div style="color:#888">ไม่มีรูปสินค้า</div>';
+
       const html = `
-      <div style="display:flex;gap:20px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:280px;">
-          <img src="${(p.image_urls&&p.image_urls[0])||'https://via.placeholder.com/400'}" style="width:100%;border-radius:10px" />
-          <div style="display:flex;gap:6px;margin-top:8px;overflow-x:auto;">
-            ${(p.image_urls||[]).map(u=>`<img src="${u}" style="height:70px;border-radius:6px;cursor:pointer" onclick="document.getElementById('mainImg').src='${u}'"/>`).join('')}
-          </div>
+        <h2 style="margin-top:0">รายละเอียดสินค้า</h2>
+        <table style="width:100%;border-collapse:collapse;font-size:15px;">
+          <tr><td style="padding:6px;border-bottom:1px solid #eee;width:40%">ชื่อสินค้า</td><td style="padding:6px;border-bottom:1px solid #eee">${p.name || '-'}</td></tr>
+          <tr><td style="padding:6px;border-bottom:1px solid #eee">แบรนด์</td><td style="padding:6px;border-bottom:1px solid #eee">${p.brand || '-'}</td></tr>
+          <tr><td style="padding:6px;border-bottom:1px solid #eee">หมวดหมู่</td><td style="padding:6px;border-bottom:1px solid #eee">${p.category || '-'}</td></tr>
+          <tr>
+  <td style="padding:6px;border-bottom:1px solid #eee;vertical-align:top">คำอธิบายแบรนด์</td>
+  <td style="padding:6px;border-bottom:1px solid #eee">
+    <ul style="margin:0;padding-left:18px;line-height:1.7;">
+      ${(p.brand_caption || '-').split('-').filter(t=>t.trim()).map(t=>`<li>${t.trim()}</li>`).join('')}
+    </ul>
+  </td>
+</tr>
+          <tr><td style="padding:6px;border-bottom:1px solid #eee">ราคา</td><td style="padding:6px;border-bottom:1px solid #eee;color:#f53d2d;font-weight:bold">฿${Number(p.price).toLocaleString()}</td></tr>
+        </table>
+
+        <div style="margin-top:15px;">
+          <div style="margin-bottom:6px;font-weight:bold">รูปสินค้า</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">${imageHtml}</div>
         </div>
-        <div style="flex:1;min-width:280px;">
-          <h2 style="margin-top:0">${p.name}</h2>
-          <div style="color:#f53d2d;font-size:26px;font-weight:bold;">฿${Number(p.price).toLocaleString()}</div>
-          <div style="margin:10px 0;color:#555">${p.specs||''}</div>
-          <div style="margin:10px 0">แบรนด์: ${p.brand||'-'}</div>
-          <div style="margin:10px 0">สต็อก: ${p.stock}</div>
-          <button onclick="buyNow('${p.id}')" style="background:#f53d2d;width:100%;font-size:18px;">ซื้อสินค้า</button>
-        </div>
-      </div>`;
+      `;
+
       const box=document.getElementById('detailBox');
       box.innerHTML=html;
       document.getElementById('detailPopup').style.display='flex';
@@ -480,23 +549,5 @@ function subscribeRealtimeProducts() {
     }
     function closeImageViewer(){ document.getElementById('imageViewer').style.display='none'; }
   </script>
-  <div class="popup-overlay" id="imageViewer" onclick="closeImageViewer()">
-    <button onclick="closeImageViewer(); event.stopPropagation()" style="position:absolute;top:20px;right:20px;font-size:28px;background:#000a;border:none;color:#fff;border-radius:50%;width:44px;height:44px;cursor:pointer">✕</button>
-    <img id="viewerImg" style="max-width:90%;max-height:90%;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.4)" />
-  </div>
-
-  <!-- Slider เต็มจอ -->
-  <div class="popup-overlay" id="imageSlider" onclick="closeSlider()" style="display:none;">
-    <button onclick="closeSlider(); event.stopPropagation()" style="position:absolute;top:20px;right:20px;font-size:28px;background:#000a;border:none;color:#fff;border-radius:50%;width:44px;height:44px;cursor:pointer">✕</button>
-    <button onclick="prevSlide(event)" style="position:absolute;left:20px;font-size:32px;background:none;border:none;color:#fff">❮</button>
-    <img id="sliderImg" style="max-width:90%;max-height:90%;border-radius:10px;" />
-    <button onclick="nextSlide(event)" style="position:absolute;right:20px;font-size:32px;background:none;border:none;color:#fff">❯</button>
-  </div>
-  <div class="popup-overlay" id="detailPopup" style="display:none;">
-    <div class="popup" style="max-width:600px;text-align:left;" onclick="event.stopPropagation()">
-      <div id="detailBox"></div>
-      <div style="display:flex;gap:10px;margin-top:15px;"><button onclick="buyNow(currentDetailId)" style="flex:1;">🛒 สั่งซื้อ</button><button onclick="closeDetail()" style="flex:1;background:#6c757d;">ปิด</button></div>
-    </div>
-  </div>
 </body>
 </html>
